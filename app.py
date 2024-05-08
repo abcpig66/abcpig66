@@ -1,17 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jun  2 21:16:35 2021
+Created on Fri Nov 22 12:39:41 2019
 
 @author: Ivan
-版權屬於「行銷搬進大程式」所有，若有疑問，可聯絡ivanyang0606@gmail.com
-
-Line Bot聊天機器人
-第三章 互動回傳功能
-傳送貼圖StickerSendMessage
 """
-#載入LineBot所需要的套件
-from flask import Flask, request, abort
+from fugle_realtime import intraday
+import schedule
+import time
 
+# Line Bot部分
+from flask import Flask, request, abort
 from linebot import (
     LineBotApi, WebhookHandler
 )
@@ -20,64 +18,46 @@ from linebot.exceptions import (
 )
 from linebot.models import *
 import re
-import requests
-from bs4 import BeautifulSoup
-import json
 
 app = Flask(__name__)
 
-# 必須放上自己的Channel Access Token
 line_bot_api = LineBotApi('p7Cmx4BoCNt0LD2kgdfeOe75gPTHF3sLGrR099KNnnrTdJK5RBzaAxB58kQs7XWmOlKesfndO2M6Nl9q4SeYn7+700i3CqocUHqzN+TeBZoCiktCjDL5w9fLfW9ed++jljaF0zYUhp620TxhWDkeTwdB04t89/1O/w1cDnyilFU=')
-# 必須放上自己的Channel Secret
 handler = WebhookHandler('980186763ec26279c6c95254f44a4ae8')
 
 line_bot_api.push_message('Uae4d95a8996273cbd5fd013544cb3d5a', TextSendMessage(text='你可以開始了'))
 
-# 監聽所有來自 /callback 的 Post Request
 @app.route("/callback", methods=['POST'])
 def callback():
-    # get X-Line-Signature header value
     signature = request.headers['X-Line-Signature']
-
-    # get request body as text
     body = request.get_data(as_text=True)
     app.logger.info("Request body: " + body)
-
-    # handle webhook body
     try:
         handler.handle(body, signature)
     except InvalidSignatureError:
         abort(400)
-
     return 'OK'
 
-#訊息傳遞區塊
-##### 基本上程式編輯都在這個function #####
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
-    message = text=event.message.text
+    message = event.message.text
     if re.match('睡',message):
-        # 貼圖查詢：https://developers.line.biz/en/docs/messaging-api/sticker-list/#specify-sticker-in-message-object
         sticker_message = StickerSendMessage(
             package_id='1',
             sticker_id='1'
         )
         line_bot_api.reply_message(event.reply_token, sticker_message)
     elif re.match('好', message):
-        # 新增第二個貼圖
         sticker_message = StickerSendMessage(
             package_id='1',
             sticker_id='2'
         )
         line_bot_api.reply_message(event.reply_token, sticker_message)
     elif re.match('驚', message):
-        # 新增第三個貼圖
         sticker_message = StickerSendMessage(
             package_id='1',
             sticker_id='3'
         )
         line_bot_api.reply_message(event.reply_token, sticker_message)
-    # 繼續新增其他貼圖...
     elif re.match('請求', message):
         sticker_message = StickerSendMessage(
             package_id='1',
@@ -120,45 +100,42 @@ def handle_message(event):
             sticker_id='10'
         )
         line_bot_api.reply_message(event.reply_token, sticker_message)
-    elif re.match('籌碼分析', message):
-        # 先与网站请求抓到法人数据
-        url = 'http://www.twse.com.tw/fund/BFI82U'
-        list_req = requests.get(url)
-        soup = BeautifulSoup(list_req.content, "html.parser")
-        getjson = json.loads(soup.text)
-
-        iilist = []
-        # 判斷請求是否成功
-        if getjson['stat'] != '很抱歉，沒有符合條件的資料!': 
-            iilist = getjson['data'][3][1:]
-
-        # 判斷是否為空值
-        if len(iilist) != 0:
-            count = 0
-            for i in iilist:
-                count += int(i.replace(',',''))
-            # 顯示結果
-            reply_message = TextSendMessage(text='三大法人合計 = ' + str(count))
-            line_bot_api.reply_message(event.reply_token, reply_message)
-        else:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text='請求失敗，請檢查您的股票代號'))
     elif re.match('關鍵字',message):
         flex_message = TextSendMessage(text='以下有雷，請小心',
                                quick_reply=QuickReply(items=[
                                    QuickReplyButton(action=MessageAction(label="關鍵價位", text="關鍵！")),
                                    QuickReplyButton(action=MessageAction(label="密碼", text="密碼！")),
-                                   QuickReplyButton(action=MessageAction(label="木沐", text="木沐！")),
+                                   QuickReplyButton(action=MessageAction(label="到價", text="到價提醒！")),
                                    QuickReplyButton(action=MessageAction(label="重要筆記", text="重要！！")),
                                    QuickReplyButton(action=MessageAction(label="早安", text="早安！")),
                                    QuickReplyButton(action=MessageAction(label="歡迎", text="歡迎！")),
                                    QuickReplyButton(action=MessageAction(label="貼圖", text="笑！")),                               
                                ]))
         line_bot_api.reply_message(event.reply_token, flex_message)
+    elif re.match('到價提醒',message): # 新增的部分
+        stock_info = "目前監控的股票及其價格：\n"
+        for i, j in zip(allstock, allprice):
+            stock_info += f"{i}: {j}\n"
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=stock_info))
     else:
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
-       
-#主程式
-import os
-if __name__ == "__main__":
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(message))
+
+def stockPrice_check(stock, check_price):
+    stockdf=intraday.trades(apiToken="p7Cmx4BoCNt0LD2kgdfeOe75gPTHF3sLGrR099KNnnrTdJK5RBzaAxB58kQs7XWmOlKesfndO2M6Nl9q4SeYn7+700i3CqocUHqzN+TeBZoCiktCjDL5w9fLfW9ed++jljaF0zYUhp620TxhWDkeTwdB04t89/1O/w1cDnyilFU=", 
+                output="dataframe", 
+                symbolId=stock)
+    nowprice = stockdf['price'].values[-1]
+    if nowprice > check_price:
+        print(stock + ' 目前價格 ' + str(nowprice))
+        
+def job():
+    allstock = ['2330','2002','2382']
+    allprice = [805, 26 , 280]
+    for i,j in zip(allstock, allprice):
+        stockPrice_check(i, j)
+
+second_5_j = schedule.every(3).seconds.do(job)
+
+while True: 
+    schedule.run_pending()
+    time.sleep(1)
