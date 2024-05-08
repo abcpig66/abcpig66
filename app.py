@@ -18,15 +18,15 @@ line_bot_api = LineBotApi('p7Cmx4BoCNt0LD2kgdfeOe75gPTHF3sLGrR099KNnnrTdJK5RBzaA
 handler = WebhookHandler('980186763ec26279c6c95254f44a4ae8')
 
 # 打算要取得的股票代碼
-stock_list_tse = ['0050', '0056', '2330', '2317', '1216']
-stock_list_otc = ['6547', '6180']
+stock_list_tse = ['2330']
+stock_list_otc = ['6180']
     
 # 組合API需要的股票清單字串
 stock_list1 = '|'.join('tse_{}.tw'.format(stock) for stock in stock_list_tse) 
 stock_list2 = '|'.join('otc_{}.tw'.format(stock) for stock in stock_list_otc) 
 stock_list = stock_list1 + '|' + stock_list2
 
-#　組合完整的URL
+# 組合完整的URL
 query_url = f'http://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch={stock_list}'
 
 # 呼叫股票資訊API
@@ -56,9 +56,9 @@ def get_stock_info():
         df['資料更新時間'] = df['資料更新時間'].apply(time2str)
         return df
 
-# 監聽所有來自 /callback 的 Post Request
-@app.route("/callback", methods=['POST'])
-def callback():
+# 監聽所有來自 /webhook 的 Post Request
+@app.route("/webhook", methods=['POST'])
+def webhook():
     signature = request.headers['X-Line-Signature']
     body = request.get_data(as_text=True)
     try:
