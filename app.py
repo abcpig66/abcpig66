@@ -130,6 +130,10 @@ def handle_message(event):
                                    QuickReplyButton(action=MessageAction(label="貼圖", text="笑！")),                               
                                ]))
         line_bot_api.reply_message(event.reply_token, flex_message)
+    elif re.match('台積電',message):
+        news_list = fetch_news("台積電")
+        news_response = "\n".join([f"{title}: {link}" for title, link in news_list])
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(news_response))
     else:
         line_bot_api.reply_message(event.reply_token, TextSendMessage(message))
 
