@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台積電相關新聞</title>
+</head>
+<body>
+
+<h1>台積電相關新聞</h1>
+
+<!-- 用Python抓取新聞 -->
+<ul>
+    <!-- Python 程式碼 -->
+    {% raw %}
+    {% highlight python %}
+    import requests
+    from bs4 import BeautifulSoup
+
+    # 要搜尋的關鍵字
+    keyword = "台積電"
+
+    # 雅虎台灣新聞的搜尋鏈接
+    search_url = f"https://tw.news.yahoo.com/search?p={keyword}"
+
+    # 發送 GET 請求
+    response = requests.get(search_url)
+
+    # 使用 BeautifulSoup 解析 HTML 內容
+    soup = BeautifulSoup(response.content, "html.parser")
+
+    # 找到所有的新聞標題和連結
+    news_results = soup.find_all('h3')
+
+    # 提取新聞標題和連結
+    for result in news_results:
+        link_tag = result.find('a', href=True)
+        if link_tag:
+            news_title = link_tag.text
+            news_link = link_tag['href']
+            print("標題：", news_title)
+            print("連結：", news_link)
+            print()
+    {% endhighlight %}
+    {% endraw %}
+</ul>
+
+</body>
+</html>
