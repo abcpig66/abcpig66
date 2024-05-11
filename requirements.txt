@@ -8,3 +8,6 @@ SnowNLP
 emoji
 pyshorteners
 scipy
+requests
+beautifulsoup4
+feedparser
