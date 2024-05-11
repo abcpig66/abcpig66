@@ -1,42 +1,144 @@
-# 匯入所需套件
-import requests
-from bs4 import BeautifulSoup
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Jun  2 21:16:35 2021
 
-# 設定搜尋關鍵字
-keyword = "台積電"
+@author: Ivan
+版權屬於「行銷搬進大程式」所有，若有疑問，可聯絡ivanyang0606@gmail.com
 
-# 定義函式以擷取新聞標題和連結
-def fetch_news(keyword):
-    # 製作雅虎台灣新聞的搜尋 URL
-    search_url = f"https://tw.news.yahoo.com/search?p={keyword}"
+Line Bot聊天機器人
+第三章 互動回傳功能
+傳送貼圖StickerSendMessage
+"""
+#載入LineBot所需要的套件
+from flask import Flask, request, abort
 
-    # 發送 GET 請求
-    response = requests.get(search_url)
+from linebot import (
+    LineBotApi, WebhookHandler
+)
+from linebot.exceptions import (
+    InvalidSignatureError
+)
+from linebot.models import *
+import re
+app = Flask(__name__)
 
-    # 使用 BeautifulSoup 解析 HTML 內容
-    soup = BeautifulSoup(response.content, "html.parser")
+# 必須放上自己的Channel Access Token
+line_bot_api = LineBotApi('p7Cmx4BoCNt0LD2kgdfeOe75gPTHF3sLGrR099KNnnrTdJK5RBzaAxB58kQs7XWmOlKesfndO2M6Nl9q4SeYn7+700i3CqocUHqzN+TeBZoCiktCjDL5w9fLfW9ed++jljaF0zYUhp620TxhWDkeTwdB04t89/1O/w1cDnyilFU=')
+# 必須放上自己的Channel Secret
+handler = WebhookHandler('980186763ec26279c6c95254f44a4ae8')
 
-    # 找到所有的新聞標題和連結
-    news_results = soup.find_all('h3')
+line_bot_api.push_message('Uae4d95a8996273cbd5fd013544cb3d5a', TextSendMessage(text='你可以開始了'))
 
-    # 提取新聞標題和連結
-    news_list = []
-    for result in news_results:
-        link_tag = result.find('a', href=True)
-        if link_tag:
-            news_title = link_tag.text
-            news_link = link_tag['href']
-            news_list.append((news_title, news_link))
+# 監聽所有來自 /callback 的 Post Request
+@app.route("/callback", methods=['POST'])
+def callback():
+    # get X-Line-Signature header value
+    signature = request.headers['X-Line-Signature']
 
-    return news_list
+    # get request body as text
+    body = request.get_data(as_text=True)
+    app.logger.info("Request body: " + body)
 
-# 設定 Line Bot 回應訊息的處理程序
+    # handle webhook body
+    try:
+        handler.handle(body, signature)
+    except InvalidSignatureError:
+        abort(400)
+
+    return 'OK'
+
+#訊息傳遞區塊
+##### 基本上程式編輯都在這個function #####
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     message = event.message.text
-    if re.match('關鍵字', message):
+    if re.match('告訴我秘密', message):
+        line_bot_api.reply_message(event.reply_token, TextSendMessage('才不告訴你哩！'))
+    elif re.match('睡', message):
+        # 貼圖查詢：https://developers.line.biz/en/docs/messaging-api/sticker-list/#specify-sticker-in-message-object
+        sticker_message = StickerSendMessage(
+            package_id='1',
+            sticker_id='1'
+        )
+        line_bot_api.reply_message(event.reply_token, sticker_message)
+    elif re.match('好', message):
+        # 新增第二個貼圖
+        sticker_message = StickerSendMessage(
+            package_id='1',
+            sticker_id='2'
+        )
+        line_bot_api.reply_message(event.reply_token, sticker_message)
+    elif re.match('驚', message):
+        # 新增第三個貼圖
+        sticker_message = StickerSendMessage(
+            package_id='1',
+            sticker_id='3'
+        )
+        line_bot_api.reply_message(event.reply_token, sticker_message)
+    # 繼續新增其他貼圖...
+    elif re.match('請求', message):
+        sticker_message = StickerSendMessage(
+            package_id='1',
+            sticker_id='4'
+        )
+        line_bot_api.reply_message(event.reply_token, sticker_message)
+    elif re.match('美好', message):
+        sticker_message = StickerSendMessage(
+            package_id='1',
+            sticker_id='5'
+        )
+        line_bot_api.reply_message(event.reply_token, sticker_message)
+    elif re.match('生氣', message):
+        sticker_message = StickerSendMessage(
+            package_id='1',
+            sticker_id='6'
+        )
+        line_bot_api.reply_message(event.reply_token, sticker_message)
+    elif re.match('是你', message):
+        sticker_message = StickerSendMessage(
+            package_id='1',
+            sticker_id='7'
+        )
+        line_bot_api.reply_message(event.reply_token, sticker_message)
+    elif re.match('怕', message):
+        sticker_message = StickerSendMessage(
+            package_id='1',
+            sticker_id='8'
+        )
+        line_bot_api.reply_message(event.reply_token, sticker_message)
+    elif re.match('衰', message):
+        sticker_message = StickerSendMessage(
+            package_id='1',
+            sticker_id='9'
+        )
+        line_bot_api.reply_message(event.reply_token, sticker_message)
+    elif re.match('笑', message):
+        sticker_message = StickerSendMessage(
+            package_id='1',
+            sticker_id='10'
+        )
+        line_bot_api.reply_message(event.reply_token, sticker_message)
+    elif re.match('關鍵字',message):
+        flex_message = TextSendMessage(text='以下有雷，請小心',
+                               quick_reply=QuickReply(items=[
+                                   QuickReplyButton(action=MessageAction(label="關鍵價位", text="關鍵！")),
+                                   QuickReplyButton(action=MessageAction(label="密碼", text="密碼！")),
+                                   QuickReplyButton(action=MessageAction(label="木沐", text="木沐！")),
+                                   QuickReplyButton(action=MessageAction(label="重要筆記", text="重要！！")),
+                                   QuickReplyButton(action=MessageAction(label="早安", text="早安！")),
+                                   QuickReplyButton(action=MessageAction(label="歡迎", text="歡迎！")),
+                                   QuickReplyButton(action=MessageAction(label="貼圖", text="笑！")),                               
+                               ]))
+        line_bot_api.reply_message(event.reply_token, flex_message)
+    elif re.match('台積電',message):
         news_list = fetch_news("台積電")
         news_response = "\n".join([f"{title}: {link}" for title, link in news_list])
         line_bot_api.reply_message(event.reply_token, TextSendMessage(news_response))
     else:
         line_bot_api.reply_message(event.reply_token, TextSendMessage(message))
+
+#主程式
+import os
+if __name__ == "__main__":
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
