@@ -28,7 +28,7 @@ line_bot_api = LineBotApi('p7Cmx4BoCNt0LD2kgdfeOe75gPTHF3sLGrR099KNnnrTdJK5RBzaA
 handler = WebhookHandler('980186763ec26279c6c95254f44a4ae8')
 
 # 设置 OpenAI API 密钥
-openai.api_key = 'sk-proj-LmrAbLuviYLLfd3NTiwOT3BlbkFJpVONwvBXFuOYxe8WyBWY'
+openai.api_key = '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'
 
 # 监听所有来自 /callback 的 Post Request
 @app.route("/callback", methods=['POST'])
