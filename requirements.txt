@@ -8,4 +8,3 @@ SnowNLP
 emoji
 pyshorteners
 scipy
-yfinance
