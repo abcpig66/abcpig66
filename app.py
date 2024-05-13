@@ -20,26 +20,27 @@ from linebot.exceptions import (
 )
 from linebot.models import *
 import re
-app = Flask(__name__)
+import openai
 
-# 必須放上自己的Channel Access Token
+# 初始化 Flask app 和 Line Bot API
+app = Flask(__name__)
 line_bot_api = LineBotApi('p7Cmx4BoCNt0LD2kgdfeOe75gPTHF3sLGrR099KNnnrTdJK5RBzaAxB58kQs7XWmOlKesfndO2M6Nl9q4SeYn7+700i3CqocUHqzN+TeBZoCiktCjDL5w9fLfW9ed++jljaF0zYUhp620TxhWDkeTwdB04t89/1O/w1cDnyilFU=')
-# 必須放上自己的Channel Secret
 handler = WebhookHandler('980186763ec26279c6c95254f44a4ae8')
 
-line_bot_api.push_message('Uae4d95a8996273cbd5fd013544cb3d5a', TextSendMessage(text='你可以開始了'))
+# 设置 OpenAI API 密钥
+openai.api_key = 'sk-proj-LmrAbLuviYLLfd3NTiwOT3BlbkFJpVONwvBXFuOYxe8WyBWY'
 
-# 監聽所有來自 /callback 的 Post Request
+# 监听所有来自 /callback 的 Post Request
 @app.route("/callback", methods=['POST'])
 def callback():
-    # get X-Line-Signature header value
+    # 获取 X-Line-Signature header 值
     signature = request.headers['X-Line-Signature']
 
-    # get request body as text
+    # 获取 request body 作为 text
     body = request.get_data(as_text=True)
     app.logger.info("Request body: " + body)
 
-    # handle webhook body
+    # 处理 webhook body
     try:
         handler.handle(body, signature)
     except InvalidSignatureError:
@@ -47,76 +48,42 @@ def callback():
 
     return 'OK'
 
-#訊息傳遞區塊
-##### 基本上程式編輯都在這個function #####
+#消息传递区块
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     message = event.message.text
     if re.match('告訴我秘密', message):
         line_bot_api.reply_message(event.reply_token, TextSendMessage('才不告訴你哩！'))
     elif re.match('睡', message):
-        # 貼圖查詢：https://developers.line.biz/en/docs/messaging-api/sticker-list/#specify-sticker-in-message-object
-        sticker_message = StickerSendMessage(
-            package_id='1',
-            sticker_id='1'
-        )
+        sticker_message = StickerSendMessage(package_id='1', sticker_id='1')
         line_bot_api.reply_message(event.reply_token, sticker_message)
     elif re.match('好', message):
-        # 新增第二個貼圖
-        sticker_message = StickerSendMessage(
-            package_id='1',
-            sticker_id='2'
-        )
+        sticker_message = StickerSendMessage(package_id='1', sticker_id='2')
         line_bot_api.reply_message(event.reply_token, sticker_message)
     elif re.match('驚', message):
-        # 新增第三個貼圖
-        sticker_message = StickerSendMessage(
-            package_id='1',
-            sticker_id='3'
-        )
+        sticker_message = StickerSendMessage(package_id='1', sticker_id='3')
         line_bot_api.reply_message(event.reply_token, sticker_message)
-    # 繼續新增其他貼圖...
+    # 继续新增其他贴纸...
     elif re.match('請求', message):
-        sticker_message = StickerSendMessage(
-            package_id='1',
-            sticker_id='4'
-        )
+        sticker_message = StickerSendMessage(package_id='1', sticker_id='4')
         line_bot_api.reply_message(event.reply_token, sticker_message)
     elif re.match('美好', message):
-        sticker_message = StickerSendMessage(
-            package_id='1',
-            sticker_id='5'
-        )
+        sticker_message = StickerSendMessage(package_id='1', sticker_id='5')
         line_bot_api.reply_message(event.reply_token, sticker_message)
     elif re.match('生氣', message):
-        sticker_message = StickerSendMessage(
-            package_id='1',
-            sticker_id='6'
-        )
+        sticker_message = StickerSendMessage(package_id='1', sticker_id='6')
         line_bot_api.reply_message(event.reply_token, sticker_message)
     elif re.match('是你', message):
-        sticker_message = StickerSendMessage(
-            package_id='1',
-            sticker_id='7'
-        )
+        sticker_message = StickerSendMessage(package_id='1', sticker_id='7')
         line_bot_api.reply_message(event.reply_token, sticker_message)
     elif re.match('怕', message):
-        sticker_message = StickerSendMessage(
-            package_id='1',
-            sticker_id='8'
-        )
+        sticker_message = StickerSendMessage(package_id='1', sticker_id='8')
         line_bot_api.reply_message(event.reply_token, sticker_message)
     elif re.match('衰', message):
-        sticker_message = StickerSendMessage(
-            package_id='1',
-            sticker_id='9'
-        )
+        sticker_message = StickerSendMessage(package_id='1', sticker_id='9')
         line_bot_api.reply_message(event.reply_token, sticker_message)
     elif re.match('笑', message):
-        sticker_message = StickerSendMessage(
-            package_id='1',
-            sticker_id='10'
-        )
+        sticker_message = StickerSendMessage(package_id='1', sticker_id='10')
         line_bot_api.reply_message(event.reply_token, sticker_message)
     elif re.match('關鍵字',message):
         flex_message = TextSendMessage(text='以下有雷，請小心',
@@ -131,9 +98,17 @@ def handle_message(event):
                                ]))
         line_bot_api.reply_message(event.reply_token, flex_message)
     elif re.match('台積電',message):
-        news_list = fetch_news("台積電")
-        news_response = "\n".join([f"{title}: {link}" for title, link in news_list])
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(news_response))
+        # 使用 OpenAI 对话模型获取回复
+        completion = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  # 或者你选择的其他模型
+            messages=[
+                {"role": "system", "content": "You are a chatbot."},
+                {"role": "user", "content": message}
+            ]
+        )
+        # 提取 OpenAI 模型的回复
+        ai_response = completion.choices[0].message['content']
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(ai_response))
     else:
         line_bot_api.reply_message(event.reply_token, TextSendMessage(message))
 
