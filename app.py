@@ -175,14 +175,21 @@ def send_reminder(user_id, message):
     line_bot_api.push_message(user_id, TextSendMessage(text=message))
 
 # 增加特定日期的提醒通知
-def add_specific_date_reminder():
+def add_specific_date_reminders():
     user_id = 'Uae4d95a8996273cbd5fd013544cb3d5a'
-    remind_datetime = datetime(2024, 6, 2, 9, 0)  # 設置提醒時間為 2024-06-02 09:00
-    message = "提醒你今天要上班！"
-    add_reminder(user_id, remind_datetime, message)
+    remind_dates = [
+        "2024-06-02", "2024-06-05", "2024-06-08", "2024-06-10",
+        "2024-06-14", "2024-06-15", "2024-06-16", "2024-06-17",
+        "2024-06-20", "2024-06-22", "2024-06-24", "2024-06-25",
+        "2024-06-26", "2024-06-27", "2024-06-29", "2024-06-30"
+    ]
+    for date_str in remind_dates:
+        remind_datetime = datetime.strptime(date_str + " 09:00", '%Y-%m-%d %H:%M')
+        message = f"提醒你今天要上班！{date_str}"
+        add_reminder(user_id, remind_datetime, message)
 
 # 主程式
 if __name__ == "__main__":
-    add_specific_date_reminder()
+    add_specific_date_reminders()
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
