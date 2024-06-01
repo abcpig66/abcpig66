@@ -19,7 +19,6 @@ import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.date import DateTrigger
 from datetime import datetime
-import json
 
 app = Flask(__name__)
 
@@ -28,20 +27,19 @@ line_bot_api = LineBotApi('p7Cmx4BoCNt0LD2kgdfeOe75gPTHF3sLGrR099KNnnrTdJK5RBzaA
 # 必須放上自己的 Channel Secret
 handler = WebhookHandler('980186763ec26279c6c95254f44a4ae8')
 
-# 發送訊息給用戶（測試用）
 line_bot_api.push_message('Uae4d95a8996273cbd5fd013544cb3d5a', TextSendMessage(text='你可以開始了'))
 
-# 定義回調路徑
+# 監聽所有來自 /callback 的 Post Request
 @app.route("/callback", methods=['POST'])
 def callback():
-    # 獲取 X-Line-Signature 標頭值
+    # get X-Line-Signature header value
     signature = request.headers['X-Line-Signature']
 
-    # 獲取請求主體內容
+    # get request body as text
     body = request.get_data(as_text=True)
     app.logger.info("Request body: " + body)
 
-    # 處理 webhook 主體
+    # handle webhook body
     try:
         handler.handle(body, signature)
     except InvalidSignatureError:
@@ -49,15 +47,92 @@ def callback():
 
     return 'OK'
 
-# 定義訊息處理函數
+# 訊息傳遞區塊
+##### 基本上程式編輯都在這個 function #####
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     message = event.message.text
-    response = None
-
+    if re.match('告訴我秘密', message):
+        line_bot_api.reply_message(event.reply_token, TextSendMessage('才不告訴你哩！'))
+    elif re.match('睡', message):
+        # 貼圖查詢：https://developers.line.biz/en/docs/messaging-api/sticker-list/#specify-sticker-in-message-object
+        sticker_message = StickerSendMessage(
+            package_id='1',
+            sticker_id='1'
+        )
+        line_bot_api.reply_message(event.reply_token, sticker_message)
+    elif re.match('好', message):
+        # 新增第二個貼圖
+        sticker_message = StickerSendMessage(
+            package_id='1',
+            sticker_id='2'
+        )
+        line_bot_api.reply_message(event.reply_token, sticker_message)
+    elif re.match('驚', message):
+        # 新增第三個貼圖
+        sticker_message = StickerSendMessage(
+            package_id='1',
+            sticker_id='3'
+        )
+        line_bot_api.reply_message(event.reply_token, sticker_message)
+    # 繼續新增其他貼圖...
+    elif re.match('請求', message):
+        sticker_message = StickerSendMessage(
+            package_id='1',
+            sticker_id='4'
+        )
+        line_bot_api.reply_message(event.reply_token, sticker_message)
+    elif re.match('美好', message):
+        sticker_message = StickerSendMessage(
+            package_id='1',
+            sticker_id='5'
+        )
+        line_bot_api.reply_message(event.reply_token, sticker_message)
+    elif re.match('生氣', message):
+        sticker_message = StickerSendMessage(
+            package_id='1',
+            sticker_id='6'
+        )
+        line_bot_api.reply_message(event.reply_token, sticker_message)
+    elif re.match('是你', message):
+        sticker_message = StickerSendMessage(
+            package_id='1',
+            sticker_id='7'
+        )
+        line_bot_api.reply_message(event.reply_token, sticker_message)
+    elif re.match('怕', message):
+        sticker_message = StickerSendMessage(
+            package_id='1',
+            sticker_id='8'
+        )
+        line_bot_api.reply_message(event.reply_token, sticker_message)
+    elif re.match('衰', message):
+        sticker_message = StickerSendMessage(
+            package_id='1',
+            sticker_id='9'
+        )
+        line_bot_api.reply_message(event.reply_token, sticker_message)
+    elif re.match('笑', message):
+        sticker_message = StickerSendMessage(
+            package_id='1',
+            sticker_id='10'
+        )
+        line_bot_api.reply_message(event.reply_token, sticker_message)
+    elif re.match('關鍵字',message):
+        flex_message = TextSendMessage(text='以下有雷，請小心',
+                               quick_reply=QuickReply(items=[
+                                   QuickReplyButton(action=MessageAction(label="關鍵價位", text="關鍵！")),
+                                   QuickReplyButton(action=MessageAction(label="密碼", text="密碼！")),
+                                   QuickReplyButton(action=MessageAction(label="木沐", text="木沐！")),
+                                   QuickReplyButton(action=MessageAction(label="重要筆記", text="重要！！")),
+                                   QuickReplyButton(action=MessageAction(label="早安", text="早安！")),
+                                   QuickReplyButton(action=MessageAction(label="歡迎", text="歡迎！")),
+                                   QuickReplyButton(action=MessageAction(label="貼圖", text="笑！")),                               
+                               ]))
+        line_bot_api.reply_message(event.reply_token, flex_message)
     # 設置日期提醒
-    match = re.match(r'提醒我在 (\d{4}-\d{2}-\d{2} \d{2}:\d{2}) 說 (.+)', message)
-    if match:
+    elif re.match(r'提醒我在 (\d{4}-\d{2}-\d{2} \d{2}:\d{2}) 說 (.+)', message):
+        match = re.match(r'提醒我在 (\d{4}-\d{2}-\d{2} \d{2}:\d{2}) 說 (.+)', message)
         remind_time = match.group(1)
         remind_message = match.group(2)
 
@@ -67,9 +142,10 @@ def handle_message(event):
             response = TextSendMessage(f'好的，我會在 {remind_time} 提醒你：{remind_message}')
         except ValueError:
             response = TextSendMessage('請輸入正確的日期時間格式，例如：2024-06-01 14:00')
-
-    if response:
+        
         line_bot_api.reply_message(event.reply_token, response)
+    else:
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(message))
 
 # 定義整點提醒功能
 def hourly_reminder():
@@ -78,7 +154,7 @@ def hourly_reminder():
     # 替換為實際的用戶 ID
     line_bot_api.push_message('Uae4d95a8996273cbd5fd013544cb3d5a', TextSendMessage(text=message))
 
-# 設置定時任務
+# 設定定時任務
 scheduler = BackgroundScheduler()
 scheduler.add_job(hourly_reminder, 'cron', minute=0)
 scheduler.start()
@@ -98,7 +174,15 @@ def add_reminder(user_id, remind_datetime, message):
 def send_reminder(user_id, message):
     line_bot_api.push_message(user_id, TextSendMessage(text=message))
 
+# 增加特定日期的提醒通知
+def add_specific_date_reminder():
+    user_id = 'Uae4d95a8996273cbd5fd013544cb3d5a'
+    remind_datetime = datetime(2024, 6, 2, 9, 0)  # 設置提醒時間為 2024-06-02 09:00
+    message = "提醒你今天要上班！"
+    add_reminder(user_id, remind_datetime, message)
+
 # 主程式
 if __name__ == "__main__":
+    add_specific_date_reminder()
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
