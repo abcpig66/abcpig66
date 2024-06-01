@@ -19,6 +19,7 @@ import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.date import DateTrigger
 from datetime import datetime
+import pytz
 
 app = Flask(__name__)
 
@@ -28,6 +29,9 @@ line_bot_api = LineBotApi('p7Cmx4BoCNt0LD2kgdfeOe75gPTHF3sLGrR099KNnnrTdJK5RBzaA
 handler = WebhookHandler('980186763ec26279c6c95254f44a4ae8')
 
 line_bot_api.push_message('Uae4d95a8996273cbd5fd013544cb3d5a', TextSendMessage(text='你可以開始了'))
+
+# 設定台北時區
+taipei_tz = pytz.timezone('Asia/Taipei')
 
 # 監聽所有來自 /callback 的 Post Request
 @app.route("/callback", methods=['POST'])
@@ -138,6 +142,7 @@ def handle_message(event):
 
         try:
             remind_datetime = datetime.strptime(remind_time, '%Y-%m-%d %H:%M')
+            remind_datetime = taipei_tz.localize(remind_datetime)
             add_reminder(event.source.user_id, remind_datetime, remind_message)
             response = TextSendMessage(f'好的，我會在 {remind_time} 提醒你：{remind_message}')
         except ValueError:
@@ -149,14 +154,14 @@ def handle_message(event):
 
 # 定義整點提醒功能
 def hourly_reminder():
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    now = datetime.now(taipei_tz).strftime("%Y-%m-%d %H:%M:%S")
     message = f"現在時間是 {now}，整點提醒！"
     # 替換為實際的用戶 ID
     line_bot_api.push_message('Uae4d95a8996273cbd5fd013544cb3d5a', TextSendMessage(text=message))
 
 # 設定定時任務
 scheduler = BackgroundScheduler()
-scheduler.add_job(hourly_reminder, 'cron', minute=0)
+scheduler.add_job(hourly_reminder, 'cron', minute=0, timezone=taipei_tz)
 scheduler.start()
 
 # 定義增加提醒功能
@@ -184,7 +189,7 @@ def add_specific_date_reminders():
         "2024-06-26", "2024-06-27", "2024-06-29", "2024-06-30"
     ]
     for date_str in remind_dates:
-        remind_datetime = datetime.strptime(date_str + " 09:00", '%Y-%m-%d %H:%M')
+        remind_datetime = taipei_tz.localize(datetime.strptime(date_str + " 09:00", '%Y-%m-%d %H:%M'))
         message = f"提醒你今天要上班！{date_str}"
         add_reminder(user_id, remind_datetime, message)
 
