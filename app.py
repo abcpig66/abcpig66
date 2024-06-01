@@ -9,17 +9,16 @@ Line Bot聊天機器人
 第三章 互動回傳功能
 傳送貼圖StickerSendMessage
 """
-#載入LineBot所需要的套件
+# 載入所需的套件
 from flask import Flask, request, abort
-
-from linebot import (
-    LineBotApi, WebhookHandler
-)
-from linebot.exceptions import (
-    InvalidSignatureError
-)
+from linebot import LineBotApi, WebhookHandler
+from linebot.exceptions import InvalidSignatureError
 from linebot.models import *
 import re
+import os
+from apscheduler.schedulers.background import BackgroundScheduler
+from datetime import datetime
+
 app = Flask(__name__)
 
 # 必須放上自己的Channel Access Token
@@ -132,7 +131,17 @@ def handle_message(event):
         line_bot_api.reply_message(event.reply_token, flex_message)
     else:
         line_bot_api.reply_message(event.reply_token, TextSendMessage(message))
+# 定義整點提醒功能
+def hourly_reminder():
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    message = f"現在時間是 {now}，整點提醒！"
+    # 替換為實際的用戶 ID
+    line_bot_api.push_message('Uae4d95a8996273cbd5fd013544cb3d5a', TextSendMessage(text=message))
 
+# 設定定時任務
+scheduler = BackgroundScheduler()
+scheduler.add_job(hourly_reminder, 'cron', minute=0)
+scheduler.start()
 #主程式
 import os
 if __name__ == "__main__":
