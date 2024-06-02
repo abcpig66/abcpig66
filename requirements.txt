@@ -9,4 +9,3 @@ emoji
 pyshorteners
 scipy
 yfinance
-apscheduler
