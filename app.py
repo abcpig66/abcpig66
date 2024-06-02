@@ -134,30 +134,6 @@ def handle_message(event):
                                    QuickReplyButton(action=MessageAction(label="貼圖", text="笑！")),                               
                                ]))
         line_bot_api.reply_message(event.reply_token, flex_message)
-    # 設置日期提醒
-    elif re.match(r'提醒我在 (\d{4}-\d{2}-\d{2} \d{2}:\d{2}) 說 (.+)', message):
-        match = re.match(r'提醒我在 (\d{4}-\d{2}-\d{2} \d{2}:\d{2}) 說 (.+)', message)
-        remind_time = match.group(1)
-        remind_message = match.group(2)
-
-        try:
-            remind_datetime = datetime.strptime(remind_time, '%Y-%m-%d %H:%M')
-            remind_datetime = taipei_tz.localize(remind_datetime)
-            add_reminder(event.source.user_id, remind_datetime, remind_message)
-            response = TextSendMessage(f'好的，我會在 {remind_time} 提醒你：{remind_message}')
-        except ValueError:
-            response = TextSendMessage('請輸入正確的日期時間格式，例如：2024-06-01 14:00')
-        
-        line_bot_api.reply_message(event.reply_token, response)
-    else:
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(message))
-
-# 定義整點提醒功能
-def hourly_reminder():
-    now = datetime.now(taipei_tz).strftime("%Y-%m-%d %H:%M:%S")
-    message = f"現在時間是 {now}，整點提醒！"
-    # 替換為實際的用戶 ID
-    line_bot_api.push_message('Uae4d95a8996273cbd5fd013544cb3d5a', TextSendMessage(text=message))
 
 # 設定定時任務
 scheduler = BackgroundScheduler()
