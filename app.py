@@ -1,37 +1,33 @@
 # -*- coding: utf-8 -*-
 """
-創建於 2021年6月2日 21:16:35
+Created on Wed Jun  2 21:16:35 2021
 
-作者：Ivan
-版權屬於「行銷搬進大程式」所有，若有疑問，可聯絡 ivanyang0606@gmail.com
+@author: Ivan
+版權屬於「行銷搬進大程式」所有，若有疑問，可聯絡ivanyang0606@gmail.com
 
-Line Bot 聊天機器人
+Line Bot聊天機器人
 第三章 互動回傳功能
-傳送貼圖 StickerSendMessage
+傳送貼圖StickerSendMessage
 """
-# 載入所需的套件
+#載入LineBot所需要的套件
 from flask import Flask, request, abort
-from linebot import LineBotApi, WebhookHandler
-from linebot.exceptions import InvalidSignatureError
+
+from linebot import (
+    LineBotApi, WebhookHandler
+)
+from linebot.exceptions import (
+    InvalidSignatureError
+)
 from linebot.models import *
 import re
-import os
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.date import DateTrigger
-from datetime import datetime
-import pytz
-
 app = Flask(__name__)
 
-# 必須放上自己的 Channel Access Token
+# 必須放上自己的Channel Access Token
 line_bot_api = LineBotApi('p7Cmx4BoCNt0LD2kgdfeOe75gPTHF3sLGrR099KNnnrTdJK5RBzaAxB58kQs7XWmOlKesfndO2M6Nl9q4SeYn7+700i3CqocUHqzN+TeBZoCiktCjDL5w9fLfW9ed++jljaF0zYUhp620TxhWDkeTwdB04t89/1O/w1cDnyilFU=')
-# 必須放上自己的 Channel Secret
+# 必須放上自己的Channel Secret
 handler = WebhookHandler('980186763ec26279c6c95254f44a4ae8')
 
 line_bot_api.push_message('Uae4d95a8996273cbd5fd013544cb3d5a', TextSendMessage(text='你可以開始了'))
-
-# 設定台北時區
-taipei_tz = pytz.timezone('Asia/Taipei')
 
 # 監聽所有來自 /callback 的 Post Request
 @app.route("/callback", methods=['POST'])
@@ -51,8 +47,8 @@ def callback():
 
     return 'OK'
 
-# 訊息傳遞區塊
-##### 基本上程式編輯都在這個 function #####
+#訊息傳遞區塊
+##### 基本上程式編輯都在這個function #####
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     message = event.message.text
@@ -134,43 +130,11 @@ def handle_message(event):
                                    QuickReplyButton(action=MessageAction(label="貼圖", text="笑！")),                               
                                ]))
         line_bot_api.reply_message(event.reply_token, flex_message)
+    else:
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(message))
 
-# 設定定時任務
-scheduler = BackgroundScheduler()
-scheduler.add_job(hourly_reminder, 'cron', minute=0, timezone=taipei_tz)
-scheduler.start()
-
-# 定義增加提醒功能
-def add_reminder(user_id, remind_datetime, message):
-    # 動態創建定時任務
-    scheduler.add_job(
-        func=send_reminder,
-        trigger=DateTrigger(run_date=remind_datetime),
-        args=[user_id, message],
-        id=f"{user_id}_{remind_datetime.strftime('%Y%m%d%H%M%S')}",
-        replace_existing=True
-    )
-
-# 定義發送提醒功能
-def send_reminder(user_id, message):
-    line_bot_api.push_message(user_id, TextSendMessage(text=message))
-
-# 增加特定日期的提醒通知
-def add_specific_date_reminders():
-    user_id = 'Uae4d95a8996273cbd5fd013544cb3d5a'
-    remind_dates = [
-        "2024-06-02", "2024-06-05", "2024-06-08", "2024-06-10",
-        "2024-06-14", "2024-06-15", "2024-06-16", "2024-06-17",
-        "2024-06-20", "2024-06-22", "2024-06-24", "2024-06-25",
-        "2024-06-26", "2024-06-27", "2024-06-29", "2024-06-30"
-    ]
-    for date_str in remind_dates:
-        remind_datetime = taipei_tz.localize(datetime.strptime(date_str + " 09:00", '%Y-%m-%d %H:%M'))
-        message = f"提醒你今天要上班！{date_str}"
-        add_reminder(user_id, remind_datetime, message)
-
-# 主程式
+#主程式
+import os
 if __name__ == "__main__":
-    add_specific_date_reminders()
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
